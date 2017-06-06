@@ -1,3 +1,13 @@
+#/* --------------------------------------------------------------------------------------
+#   Entrada da exeucao do trabalho
+#   Objetivo: Tem como objetivo a entrada de parametros de execucao e a criacao
+#             do objeto da classe PeerNode para iniciar a rede p2p
+#
+#  Autor: Fernando M Dufour e Carolina Lara Moraes
+#   Disciplina: Redes II
+#   Data da ultima atualizacao: 2017/1
+#----------------------------------------------------------------------------------------*/
+
 import sys
 import json
 from peerNode import *
@@ -13,6 +23,9 @@ def main():
     id = sys.argv[1]
     numberOfPeers = sys.argv[2]
 
+    #Realiza validacao dos parametros fornecidos
+    #id vai ser o identificador do peer
+    #numberOfPeers eh usado para definir o tamanho da rede p2p1
     try:
         id = int(id)
         if id < 0 or id > numberOfPeers:
@@ -27,9 +40,11 @@ def main():
     except :
         sys.exit("O parametro <Numero de Peers da Rede> deve ser um inteiro de 3 a 4")
 
+    #carrega o id, ip e porta dos peers da rede com base no arquivo json
     with open('peers.json') as file:
         peer_info = json.load(file)
 
+    #intancia a classe para realizar o log de execucao
     logger = Logger()
 
     logger.log("========================================================")
@@ -43,8 +58,10 @@ def main():
     logger.log("========================================================")
     logger.log("Foi informado que o tamanho da rede sera de " + str(numberOfPeers) + " Peers")
 
+    #cria o nodo da rede p2p
     peer = PeerNode(peer_info, id, logger, numberOfPeers)
 
+    #inicia a rede p2p
     peer.start_network()
 
     time.sleep(1000000000)
