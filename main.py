@@ -1,6 +1,7 @@
 import sys
 import json
-from peer import *
+from peerNode import *
+from logger import Logger
 import time
 
 def main():
@@ -21,7 +22,19 @@ def main():
     with open('peers.json') as file:
         peer_info = json.load(file)
 
-    peer = PeerNode(peer_info, id)
+    logger = Logger()
+
+    logger.log("========================================================")
+    logger.log("   Inicio da execucao do programa que implementa a      ")
+    logger.log("          eleicao de lideres entre Peers TCP            ")
+    logger.log("========================================================")
+    logger.log(" Prof. Elias P. Duarte Jr.  -  Redes de Computadores II ")
+    logger.log("        Fernando M Dufour - Carolina de Lara Moraes     ")
+    logger.log("========================================================")
+    logger.log("=================  PEER "+ str(id) + "  =============================")
+    logger.log("========================================================")
+
+    peer = PeerNode(peer_info, id, logger)
 
     peer.start_network()
 
