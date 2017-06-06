@@ -1,0 +1,21 @@
+========================================================
+   Inicio da execucao do programa que implementa a      
+          eleicao de lideres entre Peers TCP            
+========================================================
+ Prof. Elias P. Duarte Jr.  -  Redes de Computadores II 
+        Fernando M Dufour - Carolina de Lara Moraes     
+========================================================
+=================  PEER 0  =============================
+========================================================
+Foi informado que o tamanho da rede sera de 3 Peers
+Iniciando o Peer de:
+   Id    -> 0
+   IP    -> 127.0.0.1
+   Porta -> 5000
+Peer 0 (eu) esta no modo escuta na porta 5000
+Iniciando thread para esperar conexoes dos clientes
+Aguardando requisicoes de conexoes...
+Conexao recebida do Peer de Id=3, Ip=127.0.0.1
+Iniciando thread para tentar a conexao com os outros Peers
+Consegui conectar o cliente do Peer 0 (eu) com sucesso ao Peer  (Id=1, Ip=127.0.0.1, Porta=5001)
+Consegui conectar o cliente do Peer 0 (eu) com sucesso ao Peer  (Id=2, Ip=127.0.0.1, Porta=5002)

@@ -8,12 +8,15 @@ LEADER_CHANGE = "!!!"
 
 class PeerNode:
     server_sock = None
-    peers = [None] * 4
+    peers = None
     connected_clients = False
     connected_server = False
+    numberOfPeers =  0
 
-    def __init__(self, properties, node_id, logger):
+    def __init__(self, properties, node_id, logger, numberOfPeers):
+        self.numberOfPeers = numberOfPeers
         self.logger = logger
+        self.peers = [None] * numberOfPeers
         self.id = properties[node_id]["id"]
         self.ip = properties[node_id]["ip"]
         self.port = properties[node_id]["port"]
@@ -29,14 +32,14 @@ class PeerNode:
         self.server_sock.bind((self.ip, self.port))
         self.server_sock.listen(8)
 
-        self.logger.log("Peer esta no modo escuta na porta " + str(self.port))
+        self.logger.log("Peer " + str(self.id) + " (eu) esta no modo escuta na porta " + str(self.port))
 
         self.logger.log("Iniciando thread para esperar conexoes dos clientes")
         t = threading.Thread(target=self.wait_for_connections)
         t.daemon = True
         t.start()
 
-        #self.logger.log("Iniciando thread para tentar a conexao com os outros Peers")
+        self.logger.log("Iniciando thread para tentar a conexao com os outros Peers")
         t = threading.Thread(target=self.try_connect)
         t.daemon = True
         t.start()
@@ -61,6 +64,7 @@ class PeerNode:
             t.start()
 
         time.sleep(1)
+        self.logger.log("Recebi Heartbeat de todos os outros Peers, agora iremos eleger um Lider")
         self.ellect_new_leader()
 
         t = threading.Thread(target=self.display_leader)
@@ -72,7 +76,7 @@ class PeerNode:
         while(1):
             for peer in self.peers:
                 if(peer.leader):
-                    self.logger.log("O lider atual eh o peer de Id " + str(peer.id))
+                    self.logger.log("O lider atual eh o Peer " + str(peer.id))
                     break
             time.sleep(2)
 
@@ -82,7 +86,7 @@ class PeerNode:
             msg = peer.sock_to_receive.recv(1028)
             if not msg:
                 peer.disconnected = True
-                self.logger.log("Peer de Id=" + str(peer.id) + " desconectou-se")
+                self.logger.log("O Peer " + str(peer.id) + " desconectou-se")
                 if(peer.leader):
                     peer.leader = False
                     self.logger.log("Enviando mensagem URGENTE TCP - Lider mudou!")
@@ -90,7 +94,7 @@ class PeerNode:
                     self.ellect_new_leader()
                 break
             if(msg == HEARTBEAT):
-                self.logger.log("<3 Heartbeat recebido do Peer de Id=" + str(peer.id))                
+                self.logger.log("Recebi Heartbeat do Peer " + str(peer.id) + ", entao ele continua conectado!")
                 peer.alive = True
             elif(msg == LEADER_CHANGE):
                 self.logger.log("!! Mensagem TCP URGENTE recebida (Lider desconectou-se)")
@@ -101,17 +105,18 @@ class PeerNode:
         self.logger.log("Iniciando nova eleicao de lider")
         for peer in self.peers:
             if(peer.id == self.id or (not peer.disconnected)):
-                self.logger.log("$$ O peer de Id " + str(peer.id) + " foi eleito o novo lider!")
+                self.logger.log("$$ O Peer " + str(peer.id) + " foi eleito o novo lider!")
                 peer.leader = True
                 break
+
 
     def start_heartbeats(self, peer):
         while True:
             try:
                 if(not peer.disconnected):
-                    self.logger.log("Enviando Heartbeat para peer:" + peer_info(peer))
+                    self.logger.log("Peer " + str(self.id) + " (eu) enviando Heartbeat para Peer " + self.peer_info(peer))
                     peer.sock_to_send.send(HEARTBEAT)
-            except:
+            except e:
                 pass
             time.sleep(2)
 
@@ -133,7 +138,7 @@ class PeerNode:
                 try:
                     sock.connect((peer.ip, peer.port))
                     sock.send(str(self.id))
-                    self.logger.log("Conectado com sucesso ao Peer " + self.peer_info(peer))
+                    self.logger.log("Consegui conectar meu cliente com sucesso ao Peer " + self.peer_info(peer))
                     break
                 except Exception as e:
                     continue
@@ -144,7 +149,8 @@ class PeerNode:
 
     def wait_for_connections(self):
         connected_peers = 0
-        while connected_peers < 3:
+        self.logger.log("Aguardando requisicoes de conexoes...")
+        while connected_peers < self.numberOfPeers-1:
             sock, addr = self.server_sock.accept()
             id_connected = int(sock.recv(1028))
             self.logger.log("Conexao recebida do Peer de Id=" + str(id_connected) + ", Ip=" +addr[0])
@@ -154,8 +160,11 @@ class PeerNode:
 
 
     def init_peers(self, properties):
+        i = 1
         for p in properties:
-            self.peers[p["id"]] = Peer(p["id"], p["ip"], p["port"])
+            if i <= self.numberOfPeers:
+                self.peers[p["id"]] = Peer(p["id"], p["ip"], p["port"])
+                i+=1
 
     def peer_info(self, peer):
         return " (Id=" + str(peer.id) + ", Ip=" + peer.ip + ", Porta="+ str(peer.port) + ")"
